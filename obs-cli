@@ -1,0 +1,30 @@
+#!/bin/node
+const { program } = require('commander');
+const OBSWebSocket = require('obs-websocket-js');
+
+program.version('0.0.1');
+
+program
+    .command('send <request> [args]')
+    .description('send a request to the target OBS Studio.')
+    .option('-h, --host <hostname>', 'hostname used when connecting (default: localhost)', 'localhost')
+    .option('-p, --port <portname>', 'port used when connecting (default: 4444)', '4444')
+    .option('-P, --password <password>', 'password used to authenticate (default: no password)')
+    .action(async (request, args, { host, port, password }) => {
+        const obs = new OBSWebSocket();
+        const config = {
+            ...{address: `${host}:${port}`},
+            ...(password ? { password } : {})
+        };
+        const parsedArgs = args ? JSON.parse(args) : {};
+        await obs.connect(config);
+        const res = await obs.send(request, parsedArgs);
+        console.log(res);
+        obs.disconnect();
+    })
+
+program.parseAsync(process.argv)
+       .catch((err) => {
+           console.error(err);
+           process.exit(1);
+       })
